@@ -1,0 +1,17 @@
+digraph existing_sources_compile {
+graph [bgcolor="#0d1117", rankdir=LR, fontname="Helvetica", fontcolor="#e6edf3", labelloc="t", fontsize=20, pad=0.3, label="Result: Hermes's earlier Nim files, checked with nim check (counts only)"];
+node [fontname="Helvetica", fontcolor="#e6edf3", color="#30363d", style="filled,rounded", shape=box, penwidth=2, margin="0.25,0.18", fillcolor="#161b22"];
+edge [color="#8b949e", fontname="Helvetica", fontcolor="#adbac7", penwidth=1.6, arrowsize=0.9];
+
+src [label="53 existing .nim files\n(dated Sep 16-19, before Nim was installed)", color="#58a6ff"];
+top [label="6 top-level files\n2 compile, 4 fail", color="#d29922"];
+proj [label="47 files in 3 project folders\n10 compile, 37 fail", color="#d29922"];
+src->top; src->proj;
+c1 [label="most failures: syntax\n(indentation, malformed expressions,\nkeywords used as identifiers)", color="#f85149"];
+c2 [label="some failures: imports of modules\nthat do not exist\n(e.g. hyperclient, hmac, time)", color="#f85149"];
+c3 [label="a few: type errors /\nundeclared identifiers", color="#f0883e"];
+top->c1; proj->c1; proj->c2; proj->c3;
+ok [label="Zero failures were caused by the\nsandbox or the Nim install", color="#3fb950"];
+c1->ok [style=invis];
+note [label="Compiled from copies in /workspace/.nim-scratch; originals untouched, nothing was fixed.\nCategories are from the first error line per file, not exhaustive.", shape=note, color="#d29922", fontsize=11];
+}

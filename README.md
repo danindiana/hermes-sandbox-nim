@@ -13,7 +13,10 @@
 ![debian](https://img.shields.io/badge/Debian-13%20trixie-a81d33?style=for-the-badge&logo=debian&logoColor=white)
 ![sha256](https://img.shields.io/badge/tarball-sha256%20pinned-d29922?style=for-the-badge)
 ![linux](https://img.shields.io/badge/Linux-Ubuntu%2022.04%20host-e95420?style=for-the-badge&logo=ubuntu&logoColor=white)
-![diagrams](https://img.shields.io/badge/diagrams-7%20Graphviz-0d1117?style=for-the-badge&logo=graphviz&logoColor=white)
+![ci](https://github.com/danindiana/hermes-sandbox-nim/actions/workflows/verify.yml/badge.svg)
+![nph](https://img.shields.io/badge/nph-0.7.0-ffe953?style=for-the-badge&logo=nim&logoColor=black)
+![nimlangserver](https://img.shields.io/badge/nimlangserver-1.14.0-ffe953?style=for-the-badge&logo=nim&logoColor=black)
+![diagrams](https://img.shields.io/badge/diagrams-10%20Graphviz-0d1117?style=for-the-badge&logo=graphviz&logoColor=white)
 
 *Hermes runs its shell tool inside a Docker sandbox, so a compiler installed on the host is invisible to it. This repo
 records how Nim 2.2.12 was baked into the sandbox image, how it was activated in the already-running container without
@@ -24,6 +27,7 @@ losing state, what was verified, and one sharp edge (`/tmp` is noexec).*
 ---
 
 ## Contents
+0. [Update: tooling, persistence, CI](#update-tooling-persistence-ci)
 1. [Why this exists](#why-this-exists)
 2. [What was built](#what-was-built)
 3. [Dockerfile walkthrough](#dockerfile-walkthrough)
@@ -35,13 +39,56 @@ losing state, what was verified, and one sharp edge (`/tmp` is noexec).*
 9. [What was not verified](#what-was-not-verified)
 10. [Diagram gallery](#diagram-gallery)
 
+## Update: tooling, persistence, CI
+A second pass on the same day added the following. Everything here was run, and results are listed honestly in each part.
+
+**Dev tools.** `nph` 0.7.0 (formatter) and `nimlangserver` 1.14.0 are installed root-owned in `/opt/nim-tools` and symlinked
+into `/usr/local/bin`. Image size went from 9.98 GB (`desktop-tools`) to about 10.3 GB. `nph --version` prints a git-derived
+string (`prerelease-0-g2cacf6c-dirty`) rather than 0.7.0; the pinned package version is what nimble installed.
+
+**Persistent nimble packages.** `Dockerfile.nim` sets `NIMBLE_DIR=/workspace/.nimble`, so `nimble install` writes into the
+bind-mounted workspace. Tested with the real sandbox flags (`--user 1000`, `--network hermes-sbx`, `no-new-privileges`,
+`--pids-limit=512`): `nimble install -y jsony` fetched from GitHub through the egress rules, and a *fresh* container could
+`import jsony`.
+
+![nimble persistence](diagrams/08_nimble_persistence.png)
+
+A bug found on the way: the first rebuild left a root-owned `/tmp/nimblecache-*` directory in the image, so `nimble install`
+failed with "Permission denied" for the unprivileged user (a `TMPDIR` override worked, which pinpointed it). The Dockerfile now
+removes it in the same `RUN` layer.
+
+**Which container is the real one.** Hermes had already created a *new* container (`hermes-1226694b`) from the first `:nim`
+build after the config switch, so the container patched earlier (`hermes-d1c35658`) was not the active one. Both were then
+brought up to date with `docker cp` (tools plus a `/home/pn/.nimble -> /workspace/.nimble` symlink, because a running
+container cannot gain a new `ENV`). A real container recreate will use the rebuilt image directly.
+
+![container mixup](diagrams/10_container_mixup.png)
+
+**Tested through Hermes itself.** A one-shot `hermes chat -Q -t terminal` run was asked to write, compile and run a Nim
+program printing a unique marker. It reported `NIMTEST_<marker>42` and `nimble v0.24.1`. This was checked independently: the
+source file and compiled binary existed on the host side of the mount, and running the binary with `docker exec` printed the
+same marker.
+
+**The agent's earlier Nim files.** 53 `.nim` files from Sep 16-19 were checked with `nim check` from scratch copies (originals
+untouched, nothing fixed). 12 compile, 41 fail, almost all on syntax errors or imports of modules that do not exist
+(`hyperclient`, `hmac`, `time`). None of the failures were caused by the sandbox. Only counts and categories are published here.
+
+![existing sources](diagrams/09_existing_sources_compile.png)
+
+**AGENTS.md.** A short "Nim" section was added to the agent's `AGENTS.md` (build under `/workspace`, `/tmp` is noexec,
+nimble location, check with `nim check`, format with `nph`, do not invent stdlib modules).
+
+**CI.** `.github/workflows/verify.yml` has two jobs: every diagram renders and has its committed `.png`/`.svg`, and
+`Dockerfile.nim` builds on a stand-in Debian base (`ci/Dockerfile.base`, via `--build-arg BASE=`) and passes a smoke test
+(`nim`, `nimble`, `nph`, `nimlangserver`, compile-and-run). The same build and smoke test were run locally first.
+
 ## Why this exists
 Hermes Agent is configured with `terminal.backend: docker`. Every shell command the agent runs executes in a container
 created from `terminal.docker_image`. Installing Nim on the host therefore does nothing for the agent; the toolchain has
 to exist in that image. The sandbox is already a stack of purpose-built images, so Nim was added as one more layer.
 
 ## What was built
-A new image, `hermes-sandbox:nim`, one layer on top of `hermes-sandbox:desktop-tools`. The base already ships gcc 14.2,
+A new image, `hermes-sandbox:nim`, a few layers on top of `hermes-sandbox:desktop-tools`. The base already ships gcc 14.2,
 which Nim needs because it compiles through C, so no extra compiler packages were added.
 
 ![image chain](diagrams/01_image_layer_chain.png)
@@ -122,7 +169,8 @@ not included here. To adapt, change the `FROM` line to any Debian/Ubuntu image t
 To upgrade Nim, change both `NIM_VERSION` and `NIM_SHA256` (fetch the new `.sha256` from nim-lang.org).
 
 ## What was not verified
-- Hermes itself invoking `nim` through its terminal tool; checks were run with `docker run` / `docker exec`.
+- `nimlangserver` was only checked for starting and printing its version, not used from an editor.
+- A full container recreate from the rebuilt image (live containers were patched with `docker cp` instead).
 - The exact upstream tag of the very first image layer (only the OS, Debian 13, was confirmed).
 - Layer sizes in diagram 1 are whole-image totals from `docker images`, not per-layer deltas.
 
@@ -138,3 +186,6 @@ Each diagram ships as `.dot` source, `.png` and `.svg` in [`diagrams/`](diagrams
 | 05 | [/tmp noexec gotcha](diagrams/05_tmp_noexec_gotcha.svg) |
 | 06 | [Verification results](diagrams/06_verification.svg) |
 | 07 | [Trust model](diagrams/07_trust_model.svg) |
+| 08 | [Nimble persistence](diagrams/08_nimble_persistence.svg) |
+| 09 | [Existing sources compile results](diagrams/09_existing_sources_compile.svg) |
+| 10 | [Container mix-up finding](diagrams/10_container_mixup.svg) |

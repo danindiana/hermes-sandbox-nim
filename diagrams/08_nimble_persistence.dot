@@ -1,0 +1,16 @@
+digraph nimble_persistence {
+graph [bgcolor="#0d1117", rankdir=LR, fontname="Helvetica", fontcolor="#e6edf3", labelloc="t", fontsize=20, pad=0.3, label="nimble packages live in the /workspace mount, so they outlive the container"];
+node [fontname="Helvetica", fontcolor="#e6edf3", color="#30363d", style="filled,rounded", shape=box, penwidth=2, margin="0.25,0.18", fillcolor="#161b22"];
+edge [color="#8b949e", fontname="Helvetica", fontcolor="#adbac7", penwidth=1.6, arrowsize=0.9];
+
+subgraph cluster_c { label="container (ephemeral)"; color="#8b949e"; fontcolor="#8b949e"; style="rounded,dashed";
+ nim [label="nimble install -y jsony\nNIMBLE_DIR=/workspace/.nimble", color="#58a6ff"];
+ tools [label="/opt/nim-tools (image, root-owned)\nnph + nimlangserver", color="#bc8cff"]; }
+subgraph cluster_h { label="host: ~/Documents/hermes-sessions (bind mount)"; color="#3fb950"; fontcolor="#3fb950"; style=rounded;
+ pk [label=".nimble/pkgs2/jsony-1.1.6\nsurvives docker rm", color="#3fb950"]; }
+net [label="GitHub (package index + git)\nreachable through hermes-sbx egress rules", color="#39c5cf", fillcolor="#0d2e2e"];
+net->nim [label="fetch"]; nim->pk [label="write", color="#3fb950"];
+fresh [label="fresh container\nimport jsony works", color="#3fb950"]; pk->fresh [label="read", color="#3fb950"];
+note [label="Live containers (older than the image) use a symlink\n/home/pn/.nimble -> /workspace/.nimble instead of the ENV", shape=note, color="#d29922", fontsize=11];
+fresh->note [style=invis];
+}

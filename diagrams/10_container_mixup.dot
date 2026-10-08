@@ -1,0 +1,13 @@
+digraph container_mixup {
+graph [bgcolor="#0d1117", rankdir=LR, fontname="Helvetica", fontcolor="#e6edf3", labelloc="t", fontsize=20, pad=0.3, label="Finding: the config switch created a NEW container from the first :nim build; the patched one was not the active one"];
+node [fontname="Helvetica", fontcolor="#e6edf3", color="#30363d", style="filled,rounded", shape=box, penwidth=2, margin="0.25,0.18", fillcolor="#161b22"];
+edge [color="#8b949e", fontname="Helvetica", fontcolor="#adbac7", penwidth=1.6, arrowsize=0.9];
+
+cfg [label="config.yaml\ndocker_image: hermes-sandbox:nim", color="#58a6ff"];
+old [label="hermes-d1c35658\nolder, desktop-tools image\n(docker cp patched earlier)", color="#8b949e"];
+new [label="hermes-1226694b\nstarted 19:39 from the FIRST :nim build\n= the container Hermes actually uses", color="#3fb950", penwidth=3];
+img2 [label="rebuilt :nim\n(+ nph, nimlangserver, NIMBLE_DIR)", color="#bc8cff"];
+cfg->new [label="Hermes created it"]; img2->new [label="docker cp tools +\n.nimble symlink", style=dashed, color="#bc8cff"]; img2->old [label="same patch", style=dashed, color="#8b949e"];
+fix [label="Both containers now behave alike.\nA real recreate will pick up the rebuilt image.", shape=note, color="#d29922", fontsize=11];
+new->fix [style=dashed, arrowhead=none, color="#d29922"];
+}

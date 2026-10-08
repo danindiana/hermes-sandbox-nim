@@ -1,0 +1,45 @@
+name: verify
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  diagrams:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Graphviz
+        run: sudo apt-get update && sudo apt-get install -y graphviz
+      - name: Every .dot renders and has committed .png and .svg
+        run: |
+          fail=0
+          for dotfile in diagrams/*.dot; do
+            base="${dotfile%.dot}"
+            dot -Tsvg "$dotfile" -o /dev/null || { echo "::error file=$dotfile::does not render"; fail=1; }
+            for ext in png svg; do
+              [ -s "$base.$ext" ] || { echo "::error file=$dotfile::missing $base.$ext"; fail=1; }
+            done
+          done
+          exit $fail
+
+  docker-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build stand-in base
+        run: docker build -t ci-base -f ci/Dockerfile.base ci
+      - name: Build Dockerfile.nim on the stand-in base
+        run: docker build --build-arg BASE=ci-base -t hermes-sandbox:nim -f Dockerfile.nim .
+      - name: Smoke test toolchain
+        run: |
+          docker run --rm hermes-sandbox:nim sh -c '
+            set -e
+            nim --version | head -1
+            nimble --version | head -1
+            nph --version
+            nimlangserver --version
+            mkdir -p /tmp/t && cd /tmp/t
+            echo "echo 6*7" > t.nim
+            nim c --hints:off -o:/tmp/t/t t.nim
+            /tmp/t/t | grep -x 42'

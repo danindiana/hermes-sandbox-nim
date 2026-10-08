@@ -1,0 +1,7 @@
+# Minimal stand-in for hermes-sandbox:desktop-tools, used only by CI to prove Dockerfile.nim builds on a generic Debian.
+FROM debian:trixie
+RUN apt-get update && apt-get install -y --no-install-recommends \
+      gcc libc6-dev make git curl xz-utils ca-certificates \
+    && rm -rf /var/lib/apt/lists/* \
+    && useradd -m -u 1000 pn
+USER pn
