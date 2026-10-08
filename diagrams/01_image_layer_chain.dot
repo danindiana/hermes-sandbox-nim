@@ -1,0 +1,16 @@
+digraph image_layer_chain {
+graph [bgcolor="#0d1117", rankdir=LR, fontname="Helvetica", fontcolor="#e6edf3", labelloc="t", fontsize=20, pad=0.3, label="Hermes sandbox image chain: Nim is the newest layer (top)"];
+node [fontname="Helvetica", fontcolor="#e6edf3", color="#30363d", style="filled,rounded", shape=box, penwidth=2, margin="0.25,0.18", fillcolor="#161b22"];
+edge [color="#8b949e", fontname="Helvetica", fontcolor="#adbac7", penwidth=1.6, arrowsize=0.9];
+
+rankdir=TB;
+a [label="Debian 13 (trixie) base\n(exact upstream tag not verified)", color="#8b949e"];
+b [label="hermes-sandbox:graphviz\n1.56 GB", color="#58a6ff"];
+c [label="hermes-sandbox:pdf\npoppler / ocrmypdf / tesseract / docling\n8.43 GB", color="#58a6ff"];
+d [label="hermes-sandbox:tools\njq / rg / tmux / ffmpeg / pandoc / gh\n9.07 GB", color="#58a6ff"];
+e [label="hermes-sandbox:desktop-tools\nVNC + xfce + agent-browser + Chromium\n9.98 GB", color="#39c5cf", fillcolor="#0d2e2e"];
+f [label="hermes-sandbox:nim   (NEW)\n+ Nim 2.2.12 in /opt/nim", color="#3fb950", fillcolor="#1f2937", penwidth=3];
+a->b->c->d->e->f;
+n [label="Intermediate base-OS hops simplified; layer sizes are totals from docker images", shape=note, color="#d29922", fontsize=11];
+f->n [style=dashed, arrowhead=none, color="#d29922"];
+}

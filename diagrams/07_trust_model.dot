@@ -1,0 +1,12 @@
+digraph trust_model {
+graph [bgcolor="#0d1117", rankdir=LR, fontname="Helvetica", fontcolor="#e6edf3", labelloc="t", fontsize=20, pad=0.3, label="Trust model: the checksum is same-origin, so it guards integrity not provenance"];
+node [fontname="Helvetica", fontcolor="#e6edf3", color="#30363d", style="filled,rounded", shape=box, penwidth=2, margin="0.25,0.18", fillcolor="#161b22"];
+edge [color="#8b949e", fontname="Helvetica", fontcolor="#adbac7", penwidth=1.6, arrowsize=0.9];
+
+site [label="nim-lang.org", color="#39c5cf", fillcolor="#0d2e2e"];
+tar [label="tarball", color="#58a6ff"]; sha [label=".sha256 file\n(fetched once, pinned in Dockerfile)", color="#d29922"];
+img [label="image build", color="#3fb950"];
+site->tar; site->sha [label="same origin"]; tar->img; sha->img [label="verifies tarball"];
+risk [label="Compromised site could swap both;\nthe pin only catches later tampering/corruption", shape=note, color="#f0883e"];
+sha->risk [style=dashed, color="#f0883e", arrowhead=none];
+}

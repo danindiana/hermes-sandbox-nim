@@ -1,0 +1,12 @@
+digraph verification {
+graph [bgcolor="#0d1117", rankdir=LR, fontname="Helvetica", fontcolor="#e6edf3", labelloc="t", fontsize=20, pad=0.3, label="Verification results (observed 2026-10-07)"];
+node [fontname="Helvetica", fontcolor="#e6edf3", color="#30363d", style="filled,rounded", shape=box, penwidth=2, margin="0.25,0.18", fillcolor="#161b22"];
+edge [color="#8b949e", fontname="Helvetica", fontcolor="#adbac7", penwidth=1.6, arrowsize=0.9];
+
+t1 [label="fresh :nim container\nhello-world -> \"hello 42\"", color="#3fb950"];
+t2 [label="nimble --version\nv0.24.1", color="#3fb950"];
+t3 [label="running container hermes-d1c35658\nnim --version -> 2.2.12 amd64", color="#3fb950"];
+t4 [label="running container, /workspace\nnim c -r -> 2", color="#3fb950"];
+t5 [label="not tested: Hermes itself\ncalling nim via its terminal tool", color="#d29922"];
+t1->t2; t3->t4; t4->t5 [style=dashed, color="#d29922"];
+}

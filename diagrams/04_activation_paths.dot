@@ -1,0 +1,11 @@
+digraph activation_paths {
+graph [bgcolor="#0d1117", rankdir=LR, fontname="Helvetica", fontcolor="#e6edf3", labelloc="t", fontsize=20, pad=0.3, label="Two ways Nim reached the sandbox: config switch and live docker cp"];
+node [fontname="Helvetica", fontcolor="#e6edf3", color="#30363d", style="filled,rounded", shape=box, penwidth=2, margin="0.25,0.18", fillcolor="#161b22"];
+edge [color="#8b949e", fontname="Helvetica", fontcolor="#adbac7", penwidth=1.6, arrowsize=0.9];
+
+subgraph cluster_a { label="Path A: durable"; color="#3fb950"; fontcolor="#3fb950"; style=rounded;
+ a1 [label="docker build\nhermes-sandbox:nim"]; a2 [label="config.yaml\nterminal.docker_image"]; a3 [label="next container recreate\nstarts from :nim", color="#3fb950"]; a1->a2->a3; }
+subgraph cluster_b { label="Path B: immediate, no restart"; color="#bc8cff"; fontcolor="#bc8cff"; style="rounded,dashed";
+ b1 [label="tar /opt/nim out of :nim"]; b2 [label="docker cp into\nhermes-d1c35658"]; b3 [label="symlinks as root\nnim works now", color="#bc8cff"]; b1->b2->b3; }
+a1->b1 [style=dashed, label="same bits"];
+}

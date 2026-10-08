@@ -1,0 +1,13 @@
+digraph build_pipeline {
+graph [bgcolor="#0d1117", rankdir=LR, fontname="Helvetica", fontcolor="#e6edf3", labelloc="t", fontsize=20, pad=0.3, label="Dockerfile.nim build: download, verify sha256, extract, link (fails closed)"];
+node [fontname="Helvetica", fontcolor="#e6edf3", color="#30363d", style="filled,rounded", shape=box, penwidth=2, margin="0.25,0.18", fillcolor="#161b22"];
+edge [color="#8b949e", fontname="Helvetica", fontcolor="#adbac7", penwidth=1.6, arrowsize=0.9];
+
+d [label="curl -fsSL\nnim-2.2.12-linux_x64.tar.xz\nfrom nim-lang.org", color="#39c5cf", fillcolor="#0d2e2e"];
+v [label="sha256sum -c\npinned NIM_SHA256", shape=diamond, color="#d29922"];
+x [label="tar -xJf --strip-components=1\n-> /opt/nim", color="#58a6ff"];
+l [label="ln -sf /opt/nim/bin/*\n-> /usr/local/bin", color="#58a6ff"];
+u [label="USER pn\n(drop root)", color="#3fb950"];
+fail [label="build aborts\n(&& chain stops)", color="#f85149"];
+d->v; v->x [label="match", color="#3fb950"]; v->fail [label="mismatch", color="#f85149"]; x->l->u;
+}

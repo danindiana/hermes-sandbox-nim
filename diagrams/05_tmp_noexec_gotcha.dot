@@ -1,0 +1,11 @@
+digraph tmp_noexec_gotcha {
+graph [bgcolor="#0d1117", rankdir=LR, fontname="Helvetica", fontcolor="#e6edf3", labelloc="t", fontsize=20, pad=0.3, label="Gotcha: compile succeeds in /tmp but running the binary fails; use /workspace"];
+node [fontname="Helvetica", fontcolor="#e6edf3", color="#30363d", style="filled,rounded", shape=box, penwidth=2, margin="0.25,0.18", fillcolor="#161b22"];
+edge [color="#8b949e", fontname="Helvetica", fontcolor="#adbac7", penwidth=1.6, arrowsize=0.9];
+
+nim [label="nim c -r t.nim", color="#58a6ff"];
+c [label="compile -> /tmp/t\nOK", color="#3fb950"];
+r1 [label="exec /tmp/t\nPermission denied\n(/tmp is noexec)", color="#f85149"];
+w [label="cd /workspace && nim c -r\nprints 2", color="#3fb950"];
+nim->c->r1 [color="#f85149"]; nim->w [color="#3fb950", label="workaround"];
+}

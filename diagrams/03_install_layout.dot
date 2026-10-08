@@ -1,0 +1,14 @@
+digraph install_layout {
+graph [bgcolor="#0d1117", rankdir=LR, fontname="Helvetica", fontcolor="#e6edf3", labelloc="t", fontsize=20, pad=0.3, label="Installed layout inside the image"];
+node [fontname="Helvetica", fontcolor="#e6edf3", color="#30363d", style="filled,rounded", shape=box, penwidth=2, margin="0.25,0.18", fillcolor="#161b22"];
+edge [color="#8b949e", fontname="Helvetica", fontcolor="#adbac7", penwidth=1.6, arrowsize=0.9];
+
+rankdir=TB;
+subgraph cluster_opt { label="/opt/nim"; color="#58a6ff"; fontcolor="#58a6ff"; style=rounded;
+ bin [label="bin/\nnim nimble nimgrep nimsuggest testament ..."]; lib [label="lib/\nstdlib"]; cfg [label="config/ + compiler"]; }
+subgraph cluster_usr { label="/usr/local/bin"; color="#3fb950"; fontcolor="#3fb950"; style=rounded;
+ s [label="symlinks to every /opt/nim/bin/*\n(on PATH)", color="#3fb950"]; }
+s->bin [label="symlink", color="#3fb950"];
+gcc [label="/usr/bin/gcc 14.2 (already in base)\nNim compiles via C", color="#d29922"];
+bin->gcc [label="invokes", color="#d29922"];
+}

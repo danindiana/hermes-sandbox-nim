@@ -1,0 +1,6 @@
+*.bak
+*.bak-*
+.env
+config.yaml*
+__pycache__/
+*.log
